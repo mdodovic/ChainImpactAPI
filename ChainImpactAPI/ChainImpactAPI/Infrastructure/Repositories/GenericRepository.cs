@@ -15,7 +15,7 @@ namespace ChainImpactAPI.Infrastructure.Repositories
             this.context = context;
         }
 
-        public virtual async Task<List<T>> ListAllAsync(params Expression<Func<T, object>>[] includes)
+        public async Task<List<T>> ListAllAsync(params Expression<Func<T, object>>[] includes)
         {
             var query = context.Set<T>().AsNoTracking();
             foreach (var inc in includes)
@@ -24,6 +24,40 @@ namespace ChainImpactAPI.Infrastructure.Repositories
             }
 
             return await query.ToListAsync();
+        }
+
+        public virtual async Task<List<T>> ListAllAsync()
+        {
+            return await context.Set<T>().ToListAsync();
+        }
+
+
+
+        public T Update(T entity)
+        {
+
+            var existingItem = context.Set<T>().Find(entity.id);
+
+
+            if (existingItem != null)
+            {
+                context.Entry(existingItem).CurrentValues.SetValues(entity);
+                context.Entry(existingItem).State = EntityState.Modified;
+            }
+            else
+            {
+                context.Set<T>().Add(entity);
+                context.Entry(entity).State = EntityState.Added;
+            }
+
+            context.SaveChanges();
+            return entity;
+
+        }
+
+        public T Delete(T entity)
+        {
+            throw new NotImplementedException();
         }
 
     }
