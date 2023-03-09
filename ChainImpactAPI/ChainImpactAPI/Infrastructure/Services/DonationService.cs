@@ -1,7 +1,11 @@
 ﻿using ChainImpactAPI.Application.RepositoryInterfaces;
 using ChainImpactAPI.Application.ServiceInterfaces;
 using ChainImpactAPI.Dtos;
+using ChainImpactAPI.Dtos.BiggestDonations;
 using ChainImpactAPI.Dtos.ImpactorsWithDonations;
+using ChainImpactAPI.Dtos.ImpactorsWithProjects;
+using ChainImpactAPI.Dtos.NFT;
+using ChainImpactAPI.Dtos.RecentDonations;
 using ChainImpactAPI.Dtos.SearchDtos;
 using ChainImpactAPI.Infrastructure.Repositories;
 using ChainImpactAPI.Models;
@@ -12,13 +16,16 @@ namespace ChainImpactAPI.Infrastructure.Services
     {
         private readonly IConfiguration configuration;
         private readonly IDonationRepository donationRepository;
+        private readonly IImpactorRepository impactorRepository;
 
         public DonationService(
             IConfiguration configuration,
-            IDonationRepository donationRepository)
+            IDonationRepository donationRepository,
+            IImpactorRepository impactorRepository)
         {
             this.configuration = configuration;
             this.donationRepository = donationRepository;
+            this.impactorRepository = impactorRepository;
         }
 
         public List<ImpactorsWithDonationsResponseDto> GetImpactorsWithDonations(GenericDto<ImpactorsWithDonationsRequestDto>? impactorsWithDonationsDto)
@@ -46,6 +53,113 @@ namespace ChainImpactAPI.Infrastructure.Services
             }
 
             return impactorsWithDonationsDtoList;
+
+        }
+
+
+        public List<BiggestDonationsResponseDto> GetBiggestDonations(GenericDto<BiggestDonationsRequestDto>? recentDonationsDto)
+        {
+            int? skip = null;
+            int? take = null;
+            List<Donation> donations = null;
+
+            if (recentDonationsDto != null)
+            {
+                if (recentDonationsDto.PageSize != null && recentDonationsDto.PageNumber != null)
+                {
+                    skip = recentDonationsDto.PageSize.Value * (recentDonationsDto.PageNumber.Value - 1);
+                    take = recentDonationsDto.PageSize.Value;
+                }
+
+                if (recentDonationsDto.Dto != null)
+                {
+                    donations = donationRepository.SearchAsync(new GenericDto<DonationDto>(null, null, new DonationDto { project = new ProjectDto { id = recentDonationsDto.Dto.projectid } })).Result;
+                }
+            }
+
+
+
+            var mostContributedImapctors = donations.GroupBy(d => new
+            {
+                d.donator.id,
+            }).Select(gpb => new BiggestDonationsResponseDto
+            (
+                new ImpactorDto(gpb.Key.id),
+                gpb.Sum(d => d.amount)
+            )).OrderByDescending(bd => bd.amount).ToList();
+
+
+            if (skip != null && take != null)
+            {
+                mostContributedImapctors = mostContributedImapctors.Skip(skip.Value).Take(take.Value).ToList();
+            }
+
+            mostContributedImapctors.ForEach(d =>
+            {
+                var impactor = impactorRepository.SearchAsync(new GenericDto<ImpactorDto>(null, null, d.impactor)).Result.FirstOrDefault();
+                d.impactor = new ImpactorDto(impactor.id, impactor.wallet, impactor.name, impactor.description, impactor.website, impactor.facebook, impactor.discord, impactor.twitter, impactor.instagram, impactor.imageurl, impactor.role, impactor.type);
+            });
+
+            return mostContributedImapctors;
+
+        }
+
+
+        public List<RecentDonationsResponseDto> GetRecentDonations(GenericDto<RecentDonationsRequestDto>? recentDonationsDto)
+        {
+            int? skip = null;
+            int? take = null;
+            List<Donation> donations = null;
+
+            if (recentDonationsDto != null)
+            {
+                if (recentDonationsDto.PageSize != null && recentDonationsDto.PageNumber != null)
+                {
+                    skip = recentDonationsDto.PageSize.Value * (recentDonationsDto.PageNumber.Value - 1);
+                    take = recentDonationsDto.PageSize.Value;
+                }
+
+                if (recentDonationsDto.Dto != null)
+                {
+                    donations = donationRepository.SearchAsync(new GenericDto<DonationDto>(null, null, new DonationDto { project = new ProjectDto { id = recentDonationsDto.Dto.projectid } })).Result;
+                }
+            }
+
+            // TODO: Recent donations are returned, if someone donated twice in the recent period, he will be in the retunred list twice. 
+            // TODO: Probably, this should be fixed to group recent users
+
+            donations = donations.OrderBy(d => d.id).ToList();
+
+            if (skip != null && take != null)
+            {
+                donations = donations.Skip(skip.Value).Take(take.Value).ToList();
+            }
+
+
+            var recentImpactors= new List<RecentDonationsResponseDto>();
+            foreach (var donation in donations)
+            {
+                recentImpactors.Add(new RecentDonationsResponseDto
+                {
+                    impactor = new ImpactorDto(
+                                            donation.donator.id, 
+                                            donation.donator.wallet,
+                                            donation.donator.name,
+                                            donation.donator.description,
+                                            donation.donator.website,
+                                            donation.donator.facebook,
+                                            donation.donator.discord,
+                                            donation.donator.twitter,
+                                            donation.donator.instagram,
+                                            donation.donator.imageurl,
+                                            donation.donator.role,
+                                            donation.donator.type
+                                           ),
+                    amount = donation.amount
+                });
+            }
+
+            return recentImpactors;
 
         }
 
