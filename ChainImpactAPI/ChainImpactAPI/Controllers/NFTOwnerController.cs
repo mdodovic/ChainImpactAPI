@@ -1,8 +1,9 @@
-﻿using ChainImpactAPI.Application.ServiceInterfaces;
-using ChainImpactAPI.Dtos.NFT;
+﻿using ChainImpactAPI.Dtos.NFT;
 using ChainImpactAPI.Dtos;
 using ChainImpactAPI.Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
+using ChainImpactAPI.Application.RepositoryInterfaces;
+using ChainImpactAPI.Application.ServiceInterfaces;
 using ChainImpactAPI.Dtos.NFTLeft;
 
 namespace ChainImpactAPI.Controllers
@@ -11,21 +12,24 @@ namespace ChainImpactAPI.Controllers
     [Route("[controller]")]
     public class NFTOwnerController : ControllerBase
     {
-        private readonly INFTOwnerService NFTOwnerService;
+        private readonly IConfiguration configuration;
+        private readonly INFTOwnerService nftOwnerService;
 
-        public NFTOwnerController(INFTOwnerService NFTOwnerService)
+        public NFTOwnerController(
+            IConfiguration configuration,
+            INFTOwnerService nftOwnerService)
         {
-            this.NFTOwnerService = NFTOwnerService;
+            this.configuration = configuration;
+            this.nftOwnerService = nftOwnerService;
         }
 
-        [HttpPost("GetNextGoal")]
-        public IActionResult GetNextGoal(GenericDto<NFTGoalLeftRequestDto>? nftGoalLeftDto)
+
+        [HttpPost("NFTLeft")]
+        public IActionResult NFTLeft(NFTLeftRequestDto nftLeftRequestDto)
         {
+            var nftLeftList = nftOwnerService.NFTLeft(nftLeftRequestDto);
 
-            //            var nftDtolist = NFTTypeService.GetNFTsData(nftGoalLeftDto);
-
-            //            return Ok(nftDtolist);
-            return null;
+            return Ok(nftLeftList);
         }
 
     }
