@@ -1,7 +1,7 @@
 
-DROP TABLE IF EXISTS Donation;
-
 DROP TABLE IF EXISTS Transaction;
+
+DROP TABLE IF EXISTS Donation;
 
 DROP TABLE IF EXISTS Milestone;
 
@@ -45,6 +45,7 @@ CREATE TABLE Donation
 	Amount               decimal(20,9)  NULL ,
 	ProjectId            bigint  NOT NULL ,
 	DonatorId            bigint  NOT NULL ,
+	CreationDate         bigint  NOT NULL ,
 	CONSTRAINT XPKDonation PRIMARY KEY (Id)
 );
 
@@ -129,10 +130,10 @@ CREATE TABLE Transaction
 	Sender               varchar(256)  NOT NULL ,
 	Receiver             varchar(256)  NOT NULL ,
 	Amount               decimal(20,9)  NULL ,
-	ProjectId            bigint  NOT NULL ,
-	DonatorId            bigint  NOT NULL ,
 	Type                 integer  NOT NULL ,
 	MilestoneId          bigint  NULL ,
+	CreationDate         bigint  NOT NULL ,
+	DonationId           bigint  NULL ,
 	CONSTRAINT XPKTransaction PRIMARY KEY (Id)
 );
 
@@ -193,17 +194,12 @@ ALTER TABLE Project
 
 
 ALTER TABLE Transaction
-	ADD CONSTRAINT FK_Project_Transaction FOREIGN KEY (ProjectId) REFERENCES Project(Id)
-		ON UPDATE RESTRICT
-		ON DELETE RESTRICT;
-
-ALTER TABLE Transaction
-	ADD CONSTRAINT FK_Impactor_Transaction FOREIGN KEY (DonatorId) REFERENCES Impactor(Id)
-		ON UPDATE RESTRICT
-		ON DELETE RESTRICT;
-
-ALTER TABLE Transaction
 	ADD CONSTRAINT FK_Milestone_Transaction FOREIGN KEY (MilestoneId) REFERENCES Milestone(Id)
+		ON UPDATE SET NULL
+		ON DELETE SET NULL;
+
+ALTER TABLE Transaction
+	ADD CONSTRAINT FK_Donation_Transaction FOREIGN KEY (DonationId) REFERENCES Donation(Id)
 		ON UPDATE SET NULL
 		ON DELETE SET NULL;
 
