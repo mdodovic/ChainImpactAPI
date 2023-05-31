@@ -36,6 +36,8 @@ CREATE TABLE Charity
 	Instagram            varchar(100)  NULL ,
 	ImageUrl             varchar(1000)  NULL ,
 	Description          varchar(4000)  NULL ,
+	Confirmed            boolean  NOT NULL ,
+	Email                varchar(100)  NOT NULL ,
 	CONSTRAINT XPKCharity PRIMARY KEY (Id)
 );
 
@@ -63,6 +65,10 @@ CREATE TABLE Impactor
 	Role                 integer  NULL ,
 	Type                 integer  NULL ,
 	ImageUrl             varchar(10000)  NULL ,
+	Confirmed            boolean  NOT NULL ,
+	Password             varchar(400)  NULL ,
+	Username             varchar(100)  NULL ,
+	Email                varchar(100)  NULL ,
 	CONSTRAINT XPKUser PRIMARY KEY (Id)
 );
 
@@ -120,6 +126,7 @@ CREATE TABLE Project
 	SecondaryCauseTypeId bigint  NOT NULL ,
 	Wallet               varchar(256)  NULL ,
 	TotalBackers         integer  NOT NULL ,
+	Confirmed            boolean  NOT NULL ,
 	CONSTRAINT XPKProject PRIMARY KEY (Id)
 );
 
